@@ -1,0 +1,234 @@
+import pygame
+import random
+import os
+import sys
+import math
+#nao era para fazer esse jogo, mas eu fiz
+pygame.init()
+tela_largura = 1280
+tela_altura = 720
+tela = pygame.display.set_mode((tela_largura, tela_altura))
+pygame.display.set_caption("Jogo do Brasil")
+relogio = pygame.time.Clock()
+fonte = pygame.font.Font(None, 36)
+#nao era para vc estar vendo isso, mas ja que vc viu, vou te explicar
+#nao era para vc estar aq garotinho 
+# esse codigo e uma grande gambiarra, eu fiz ele para aprender a programar em python
+#nao eu nao sou nazista ok?
+#segue eu no instagram @_theuzin.jpg
+# e apenas um jogo meme 
+
+fundo_img = pygame.image.load(os.path.join("imagens/hittler.jpg"))
+fundo_img = pygame.transform.scale(fundo_img, (tela_largura, tela_altura))
+jogador_img = pygame.image.load(os.path.join("imagens/brasil.png"))
+jogador_img = pygame.transform.scale(jogador_img, (80, 80))
+inimigo_img = pygame.image.load(os.path.join("imagens/nazista.png"))
+inimigo_img = pygame.transform.scale(inimigo_img, (80, 80))
+tiro_img = pygame.image.load(os.path.join("imagens/bala.png"))
+tiro_img = pygame.transform.scale(tiro_img, (20, 20))
+
+
+pygame.mixer.music.load(os.path.join("imagens/musica.mp3"))
+
+
+
+jogador_x = 600
+jogador_y = 600
+velocidade = 5
+jogador_vida = 110
+
+tiro_x = 0
+tiro_y = 0
+tiro_visivel = False
+tiro_vel = 50
+
+score = 0
+fase = 1
+
+
+def desenhar_jogador(x, y):
+    tela.blit(jogador_img, (x, y))
+
+def desenhar_inimigo(x, y):
+    tela.blit(inimigo_img, (x, y))
+
+def atirar(x, y):
+    tela.blit(tiro_img, (x + 30, y))
+
+def colisao(x1, y1, x2, y2):
+    return abs(x1 - x2) < 40 and abs(y1 - y2) < 40
+
+def mostrar_score(score):
+    texto = fonte.render(f"Score: {score}", True, (0, 0, 0))
+    
+    tela.blit(texto, (10, 10))
+
+def mostrar_vida(vida):
+    pygame.draw.rect(tela, (255, 0, 0), (10, 50, 200, 20))
+    pygame.draw.rect(tela, (0, 255, 0), (10, 50, 2 * vida, 20))
+
+def tela_inicio():
+    tela.fill((0, 0, 0))
+    titulo = fonte.render("feito por @_theuzin.jpg",True, (100, 100, 100))
+    tela.blit(titulo, (tela_largura // 2 - 200, tela_altura // 2 - 100))
+    titulo = fonte.render("segue la cara",True, (255, 255, 255))
+    titulo = fonte.render("pretos vs nossos ancestrais", True, (255, 255, 255))
+    iniciar = fonte.render("Pressione ENTER para começar", True, (255, 255, 255))
+    tela.blit(titulo, (tela_largura // 2 - 200, tela_altura // 2 - 50))
+    tela.blit(iniciar, (tela_largura // 2 - 200, tela_altura // 2))
+    pygame.display.update()
+    esperando = True
+    while esperando:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_RETURN:
+                esperando = False
+                tela_carregamento_animada()
+                pygame.mixer.music.play(-1)
+
+def tela_carregamento_animada():
+    tempo_total = 2000
+    tempo_inicial = pygame.time.get_ticks()
+    centro_x = tela_largura // 2
+    centro_y = tela_altura // 2
+    raio = 50
+
+    while pygame.time.get_ticks() - tempo_inicial < tempo_total:
+        tela.fill((0, 0, 0))
+        texto = fonte.render("Carregando...", True, (255, 255, 255))
+        tela.blit(texto, (centro_x - texto.get_width() // 2, centro_y - 100))
+
+        tempo = pygame.time.get_ticks() - tempo_inicial
+        angulo = (tempo / 1000) * 4 * math.pi 
+        x = centro_x + int(math.cos(angulo) * raio)
+        y = centro_y + int(math.sin(angulo) * raio)
+        pygame.draw.circle(tela, (0, 255, 0), (x, y), 10)
+
+        pygame.display.update()
+
+    
+
+def tela_game_over():
+    tela.fill((0, 0, 0))
+    msg = fonte.render("o nazista vai comer a sua bunda", True, (255, 0, 0))
+    reiniciar = fonte.render("precione ALT F4 para jogar novamente", True, (255, 255, 255))
+    oi = fonte.render("nao aperta ALT F4 nao amigo so aperta ENTER msm", True, (100, 100, 100))
+    oi = pygame.font.Font(None, 20).render("nao aperta ALT F4 nao amigo so aperta ENTER msm", True, (255, 255, 255))
+    tela.blit(oi, (tela_largura // 2 - -300, tela_altura // 2 - -325))
+    pygame.mixer.music.unload()
+    tela.blit(msg, (tela_largura // 2 - 200, tela_altura // 2 - 50))
+    tela.blit(reiniciar, (tela_largura // 2 - 250, tela_altura // 2))
+    pygame.display.update()
+    esperando = True
+    while esperando:
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if evento.type == pygame.KEYDOWN and evento.key == pygame.K_RETURN:
+                esperando = False
+                
+
+
+def criar_inimigos(qtd):
+    inimigos = []
+    for _ in range(qtd):
+        x = random.randint(0, tela_largura - 80)
+        y = random.randint(0, 300)
+        inimigos.append([x, y, 4])
+    return inimigos
+
+tela_inicio()
+inimigos = criar_inimigos(5)
+pygame.mixer.music.play(-1)
+
+
+rodando = True
+while rodando:
+    tela.blit(fundo_img, (0, 0))
+    for evento in pygame.event.get():
+        if evento.type == pygame.QUIT:
+            rodando = False
+
+    teclas = pygame.key.get_pressed()
+    if teclas[pygame.K_LEFT]:
+        jogador_x -= velocidade
+    if teclas[pygame.K_RIGHT]:
+        jogador_x += velocidade
+    if teclas[pygame.K_UP]:
+        jogador_y -= velocidade
+    if teclas[pygame.K_DOWN]:
+        jogador_y += velocidade
+    if teclas[pygame.K_SPACE] and not tiro_visivel:
+        tiro_x = jogador_x
+        tiro_y = jogador_y
+        tiro_visivel = True
+
+   
+    jogador_x = max(0, min(jogador_x, tela_largura - 80))
+    jogador_y = max(0, min(jogador_y, tela_altura - 80))
+
+    
+    if tiro_visivel:
+        atirar(tiro_x, tiro_y)
+        tiro_y -= tiro_vel
+        if tiro_y < 0:
+            tiro_visivel = False
+
+ 
+    for inimigo in inimigos:
+        inimigo[1] += 0.5
+        if colisao(jogador_x, jogador_y, inimigo[0], inimigo[1]):
+            jogador_vida -= 100
+            inimigo[1] = -100
+
+        if tiro_visivel and colisao(tiro_x, tiro_y, inimigo[0], inimigo[1]):
+            score += 1
+            inimigo[1] = -100
+            tiro_visivel = False
+
+        desenhar_inimigo(inimigo[0], inimigo[1])
+
+
+    if score >= fase * 10:
+        fase += 1
+        inimigos.extend(criar_inimigos(3))
+
+
+    if jogador_vida <= 0:
+        tela_game_over()
+        jogador_x, jogador_y = 600, 600
+        score = 0
+        jogador_vida = 100
+        fase = 1
+        inimigos = criar_inimigos(5)
+        tela_inicio()
+
+    desenhar_jogador(jogador_x, jogador_y)
+    mostrar_score(score)
+    mostrar_vida(jogador_vida)
+
+    pygame.display.update()
+    relogio.tick(100)
+
+pygame.quit()
+pygame.mixer.music.stop()
+pygame.mixer.music.unload()
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+#FEITO POR @_theuzin.jpg
+# o motivo disso é que eu sou um nazista
+# o motivo disso é que eu sou um nazista e tambem pq tava dando erro e a soluçao foi fazer essa gambiarra
+# o motivo disso é que eu sou um nazista e tambem pq tava dando erro e a soluçao foi fazer essa gambiarra
